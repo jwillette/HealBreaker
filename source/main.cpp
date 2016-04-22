@@ -39,53 +39,50 @@
 
 
 
-
-
 #include <stdio.h>
 #include <iostream>
+#include <vector>
+#include <stdlib.h>
+#include <time.h>
+
+#include "player.h"
+#include "pickup.h"
+#include "germ.h"
+#include "virus.h"
 
 using namespace std;
 
 
 
-// variables for background movement and position
 int bkgdSpeed = 50;
 
-SDL_Rect bkgd1Pos, bkgd2Pos;		// rectangle for background texture
+SDL_Rect bkgd1Pos, bkgd2Pos;
 
-float b1pos_X = 0, b1pos_Y = 0;		// float variables for background movement
+float b1pos_X = 0, b1pos_Y = 0;
 float b2pos_X = 0, b2pos_Y = -768;
 
-
-// code for frame rate independence
 float deltaTime = 0.0;
 int thisTime = 0;
 int lastTime = 0;
 
 
-// move the background
+
 void UpdateBackground()
 {
-	// Update background 1
 	b1pos_Y += (bkgdSpeed * 1) * deltaTime;
 
-	// Set the new bkgd1 position
 	bkgd1Pos.y = (int)(b1pos_Y + 0.5f);
 
-	// Reset when off the bottom of the screen
 	if (bkgd1Pos.y >= 768)
 	{
 		bkgd1Pos.y = -768;
 		b1pos_Y = bkgd1Pos.y;
 	}
 
-	// Update background 2
 	b2pos_Y += (bkgdSpeed * 1) * deltaTime;
 
-	// Set the new bkgd1 position
 	bkgd2Pos.y = (int)(b2pos_Y + 0.5f);
 
-	// Reset when off the bottom of the screen
 	if (bkgd2Pos.y >= 768)
 	{
 		bkgd2Pos.y = -768;
@@ -94,14 +91,10 @@ void UpdateBackground()
 }
 
 
-// new joystick variables
-// analog joystick dead zone
 const int JOYSTICK_DEAD_ZONE = 8000;
 
-// joystick directions
 float xDir, yDir;
 
-// cursor float variables for movement
 float pos_X, pos_Y;
 
 SDL_Rect cursorPos, activePos;
@@ -109,7 +102,6 @@ SDL_Rect cursorPos, activePos;
 int cursorSpeed = 400;
 
 
-// move cursor function
 void moveCursor(const SDL_ControllerAxisEvent event)
 {
 	if (event.which == 0)
@@ -143,22 +135,17 @@ void moveCursor(const SDL_ControllerAxisEvent event)
 }
 
 
-// update cursor onscreen
 void UpdateCursor(float deltaTime)
 {
-	// float values to update cursor
 	pos_X += (cursorSpeed * xDir) * deltaTime;
 	pos_Y += (cursorSpeed * yDir) * deltaTime;
 
-	// assign to SDL_Rect ints X and Y
 	cursorPos.x = (int)(pos_X + 0.5f);
 	cursorPos.y = (int)(pos_Y + 0.5f);
 
-	// update active position of cursor - collision box
 	activePos.x = cursorPos.x;
 	activePos.y = cursorPos.y;
 
-	// off the screen in X
 	if (cursorPos.x < 0)
 	{
 		cursorPos.x = 0;
@@ -171,7 +158,6 @@ void UpdateCursor(float deltaTime)
 		pos_X = cursorPos.x;
 	}
 
-	// off the screen in Y
 	if (cursorPos.y < 0)
 	{
 		cursorPos.y = 0;
@@ -186,14 +172,9 @@ void UpdateCursor(float deltaTime)
 }
 
 
-// variables for the menu button over states
 bool startOver = false, backstoryOver = false, instructionsOver = false, quitOver = false,
-menuOver = false, playOver = false;
+menuOver = false, level1Over = false;
 
-// class header
-#include <vector>
-#include <stdlib.h>
-#include <time.h>
 
 
 
@@ -217,13 +198,10 @@ int main(int argc, char* argv[])
 
 #if defined(__APPLE__)
 
-	// get the current working directory
 	string cwd(getcwd(NULL, 0));
 
-	// create a string linking to the mac's images folder
 	string images_dir = cwd + "/HealBreaker/images/";
 
-	// create a string to link to the audio folder
 	string audio_dir = cwd + "/HealBreaker/audio/";
 
 #endif
@@ -241,33 +219,23 @@ int main(int argc, char* argv[])
 
 
 
-	SDL_Window *window;                    // Declare a pointer
+	SDL_Window *window;
 
-	SDL_Init(SDL_INIT_EVERYTHING);         // Initialize SDL2
+	SDL_Init(SDL_INIT_EVERYTHING);
 
-	// Create an application window with the following settings:
-	window = SDL_CreateWindow(
-		"An SDL2 window",                  // window title
-		SDL_WINDOWPOS_UNDEFINED,           // initial x position
-		SDL_WINDOWPOS_UNDEFINED,           // initial y position
-		1024,                               // width, in pixels
-		768,                               // height, in pixels
-		SDL_WINDOW_OPENGL                  // flags - see below
-		);
+	window = SDL_CreateWindow("An SDL2 window", SDL_WINDOWPOS_UNDEFINED,
+		SDL_WINDOWPOS_UNDEFINED, 1024, 768, SDL_WINDOW_OPENGL);
 
-	// Check that the window was successfully created
-	if (window == NULL) {
-		// In the case that the window could not be made...
+	if (window == NULL)
+	{
 		printf("Could not create window: %s\n", SDL_GetError());
 		return 1;
 	}
 
 
 
-	// Declare the renderer
 	SDL_Renderer *renderer = NULL;
 
-	// Create the renderer
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
 
@@ -276,24 +244,17 @@ int main(int argc, char* argv[])
 	//     ***** Create Background *****
 	/////////////////////////////////////////
 
-	// Create an SDL surface to hold the background image
 	SDL_Surface *surface = IMG_Load((images_dir + "bg.png").c_str());
 
-	// Create an SDL texture
 	SDL_Texture *bkgd1;
-
-	// Place surface into the texture bkgd1
 	bkgd1 = SDL_CreateTextureFromSurface(renderer, surface);
 
-	// Create a second SDL texture
 	SDL_Texture *bkgd2;
 	bkgd2 = SDL_CreateTextureFromSurface(renderer, surface);
 
-	// Free the SDL surface
 	SDL_FreeSurface(surface);
 
 
-	// Set the x, y, w, and h for the rectangles
 	bkgd1Pos.x = 0;
 	bkgd1Pos.y = 0;
 	bkgd1Pos.w = 1024;
@@ -326,6 +287,21 @@ int main(int argc, char* argv[])
 	titlePos.h = 75;
 
 
+	// ***** Rona Graphic ***** //
+
+	surface = IMG_Load((images_dir + "rona-graphic2.png").c_str());
+	SDL_Texture *ronaMenu;
+	ronaMenu = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_FreeSurface(surface);
+
+	SDL_Rect ronaMenuPos;
+
+	ronaMenuPos.x = 10;
+	ronaMenuPos.y = 68;
+	ronaMenuPos.w = 498;
+	ronaMenuPos.h = 700;
+
+
 	// ***** Start Game ***** //
 
 	surface = IMG_Load((images_dir + "start-d2.png").c_str());
@@ -340,7 +316,7 @@ int main(int argc, char* argv[])
 
 	SDL_Rect startPos;
 
-	startPos.x = 606;
+	startPos.x = 646;
 	startPos.y = 255;
 	startPos.w = 363;
 	startPos.h = 52;
@@ -360,7 +336,7 @@ int main(int argc, char* argv[])
 
 	SDL_Rect instructionsPos;
 
-	instructionsPos.x = 596;
+	instructionsPos.x = 636;
 	instructionsPos.y = 384;
 	instructionsPos.w = 382;
 	instructionsPos.h = 54;
@@ -380,7 +356,7 @@ int main(int argc, char* argv[])
 
 	SDL_Rect backstoryPos;
 
-	backstoryPos.x = 636;
+	backstoryPos.x = 676;
 	backstoryPos.y = 512;
 	backstoryPos.w = 304;
 	backstoryPos.h = 67;
@@ -400,7 +376,7 @@ int main(int argc, char* argv[])
 
 	SDL_Rect quitPos;
 
-	quitPos.x = 619;
+	quitPos.x = 659;
 	quitPos.y = 640;
 	quitPos.w = 337;
 	quitPos.h = 54;
@@ -414,17 +390,32 @@ int main(int argc, char* argv[])
 
 	// ***** Instructions ***** //
 
-	//////surface = IMG_Load((images_dir + "instructions-text.png").c_str());
-	//////SDL_Texture *instructionsText;
-	//////instructionsText = SDL_CreateTextureFromSurface(renderer, surface);
-	//////SDL_FreeSurface(surface);
+	surface = IMG_Load((images_dir + "instructions-text2.png").c_str());
+	SDL_Texture *instructionsText;
+	instructionsText = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_FreeSurface(surface);
 
-	//////SDL_Rect instructionsTextPos;
+	SDL_Rect instructionsTextPos;
 
-	//////instructionsTextPos.x = 250;
-	//////instructionsTextPos.y = 300;
-	//////instructionsTextPos.w = 529;
-	//////instructionsTextPos.h = 287;
+	instructionsTextPos.x = 20;
+	instructionsTextPos.y = 160;
+	instructionsTextPos.w = 583;
+	instructionsTextPos.h = 559;
+
+
+	// ***** Backstory ***** //
+
+	surface = IMG_Load((images_dir + "backstory-text.png").c_str());
+	SDL_Texture *backstoryText;
+	backstoryText = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_FreeSurface(surface);
+
+	SDL_Rect backstoryTextPos;
+
+	backstoryTextPos.x = 20;
+	backstoryTextPos.y = 160;
+	backstoryTextPos.w = 583;
+	backstoryTextPos.h = 559;
 
 
 	// ***** Main Menu ***** //
@@ -441,72 +432,132 @@ int main(int argc, char* argv[])
 
 	SDL_Rect menuNPos;
 
-	menuNPos.x = 10;
-	menuNPos.y = 700;
+	menuNPos.x = 666;
+	menuNPos.y = 512;
 	menuNPos.w = 330;
 	menuNPos.h = 54;
 
 
+	// ***** Start Game ***** //
 
-	/////////////////////////////////////////////
-	////        ***** Create Win *****
-	/////////////////////////////////////////////
+	SDL_Rect startPosInst;
 
-
-	//// ***** Win ***** //
-
-	//surface = IMG_Load((images_dir + "win-text.png").c_str());
-	//SDL_Texture *winText;
-	//winText = SDL_CreateTextureFromSurface(renderer, surface);
-	//SDL_FreeSurface(surface);
-
-	//SDL_Rect winTextPos;
-
-	//winTextPos.x = 390;
-	//winTextPos.y = 30;
-	//winTextPos.w = 215;
-	//winTextPos.h = 178;
+	startPosInst.x = 646;
+	startPosInst.y = 255;
+	startPosInst.w = 363;
+	startPosInst.h = 52;
 
 
-	//// ***** Play Again ***** //
+	// ***** Backstory ***** //
 
-	//surface = IMG_Load((images_dir + "play.png").c_str());
-	//SDL_Texture *playN;
-	//playN = SDL_CreateTextureFromSurface(renderer, surface);
-	//SDL_FreeSurface(surface);
+	SDL_Rect backstoryPosInst;
 
-	//surface = IMG_Load((images_dir + "play-over.png").c_str());
-	//SDL_Texture *playO;
-	//playO = SDL_CreateTextureFromSurface(renderer, surface);
-	//SDL_FreeSurface(surface);
-
-	//SDL_Rect playNPos;
-
-	//playNPos.x = 810;
-	//playNPos.y = 700;
-	//playNPos.w = 193;
-	//playNPos.h = 47;
+	backstoryPosInst.x = 676;
+	backstoryPosInst.y = 384;
+	backstoryPosInst.w = 304;
+	backstoryPosInst.h = 67;
 
 
 
-	/////////////////////////////////////////////
-	////        ***** Create Lose *****
-	/////////////////////////////////////////////
+	///////////////////////////////////////////
+	//        ***** Create Win *****
+	///////////////////////////////////////////
 
 
-	//// ***** Lose ***** //
+	// ***** Win ***** //
 
-	//surface = IMG_Load((images_dir + "lose-text.png").c_str());
-	//SDL_Texture *loseText;
-	//loseText = SDL_CreateTextureFromSurface(renderer, surface);
-	//SDL_FreeSurface(surface);
+	surface = IMG_Load((images_dir + "win.png").c_str());
+	SDL_Texture *winText;
+	winText = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_FreeSurface(surface);
 
-	//SDL_Rect loseTextPos;
+	SDL_Rect winTextPos;
 
-	//loseTextPos.x = 390;
-	//loseTextPos.y = 30;
-	//loseTextPos.w = 239;
-	//loseTextPos.h = 190;
+	winTextPos.x = 137;
+	winTextPos.y = 20;
+	winTextPos.w = 720;
+	winTextPos.h = 218;
+
+
+	// ***** Win graphic ***** //
+
+	surface = IMG_Load((images_dir + "wingraphic.png").c_str());
+	SDL_Texture *winGraphic;
+	winGraphic = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_FreeSurface(surface);
+
+	SDL_Rect winGraphicPos;
+
+	winGraphicPos.x = 0;
+	winGraphicPos.y = 0;
+	winGraphicPos.w = 1024;
+	winGraphicPos.h = 768;
+
+
+	// ***** Play Again ***** //
+
+	surface = IMG_Load((images_dir + "playagain-d.png").c_str());
+	SDL_Texture *playN;
+	playN = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_FreeSurface(surface);
+
+	surface = IMG_Load((images_dir + "playagain-o.png").c_str());
+	SDL_Texture *playO;
+	playO = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_FreeSurface(surface);
+
+	SDL_Rect playNPos;
+
+	playNPos.x = 680;
+	playNPos.y = 700;
+	playNPos.w = 326;
+	playNPos.h = 70;
+
+
+	// ***** Reposition Menu ***** //
+
+	SDL_Rect menuWPos;
+
+	menuWPos.x = 25;
+	menuWPos.y = 700;
+	menuWPos.w = 330;
+	menuWPos.h = 54;
+
+
+
+	///////////////////////////////////////////
+	//        ***** Create Lose *****
+	///////////////////////////////////////////
+
+
+	// ***** Lose ***** //
+
+	surface = IMG_Load((images_dir + "lose.png").c_str());
+	SDL_Texture *loseText;
+	loseText = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_FreeSurface(surface);
+
+	SDL_Rect loseTextPos;
+
+	loseTextPos.x = 110;
+	loseTextPos.y = 30;
+	loseTextPos.w = 800;
+	loseTextPos.h = 226;
+
+
+	// ***** Dim bg ***** //
+
+	surface = IMG_Load((images_dir + "losefilter2.png").c_str());
+	SDL_Texture *bgFilter;
+	bgFilter = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_FreeSurface(surface);
+
+	SDL_Rect bgFilterPos;
+
+	bgFilterPos.x = 0;
+	bgFilterPos.y = 0;
+	bgFilterPos.w = 1024;
+	bgFilterPos.h = 768;
 
 
 
@@ -521,15 +572,11 @@ int main(int argc, char* argv[])
 
 	SDL_FreeSurface(surface);
 
-	//SDL_Rect cursorPos, activePos;
-
-	// rectangle for position for cursor's graphic
 	cursorPos.x = 0;
 	cursorPos.y = 0;
 	cursorPos.w = 64;
 	cursorPos.h = 64;
 
-	// rectangle for position for cursor's collision detection
 	activePos.x = 5;
 	activePos.y = 5;
 	activePos.w = 15;
@@ -543,31 +590,24 @@ int main(int argc, char* argv[])
 	//     ***** Create Controller *****
 	/////////////////////////////////////////
 
-	// Turn on game controller events
 	SDL_GameControllerEventState(SDL_ENABLE);
 
-	// Set up a game controller variable
 	SDL_GameController* gGameController0 = NULL;
 
-	// Open game controller
 	gGameController0 = SDL_GameControllerOpen(0);
 
-	// Set up a second game controller
 	SDL_GameController* gGameController1 = NULL;
 	gGameController1 = SDL_GameControllerOpen(1);
 
 
-	// SDL event to handle input
+
 	SDL_Event event;
 
-	// Set up variables for the game states
-	enum GameState { MENU, INSTRUCTIONS, PLAY, BACKSTORY, WIN, LOSE };
+	enum GameState { MENU, INSTRUCTIONS, LEVEL1, LEVEL2, BACKSTORY, WIN, LOSE };
 
-	// Set up the initial state
 	GameState gameState = MENU;
 
-	// Boolean values to control movement through the states
-	bool menu, instructions, play, backstory, win, lose, quit;
+	bool menu, instructions, level1, level2, backstory, win, lose, quit;
 	quit = false;
 
 
@@ -576,33 +616,146 @@ int main(int argc, char* argv[])
 	//           ***** Audio *****
 	/////////////////////////////////////////
 
-	// Open audio channel
 	Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
 
-	// Load a music file
-	Mix_Music *bgm = Mix_LoadMUS((audio_dir + "menu-Techno-Caper.mp3").c_str());
+	Mix_Music *bgm = Mix_LoadMUS((audio_dir + "Surreal-Chase.mp3").c_str());
+	Mix_Music *bgl1 = Mix_LoadMUS((audio_dir + "inside-Insane-Gameplay.wav").c_str());
+	Mix_Music *bgl2 = Mix_LoadMUS((audio_dir + "outside-Funky-Gameplay_v001.mp3").c_str());
+	Mix_Music *bglose = Mix_LoadMUS((audio_dir + "lose-Escape.mp3").c_str());
 
-	// If the music file is not playing, play it
 	if (!Mix_PlayingMusic())
 		Mix_PlayMusic(bgm, -1);
 
-	//// Set up a Sound Effect chunk for the button over state
-	//Mix_Chunk *overSound = Mix_LoadWAV((audio_dir + "over.wav").c_str());
+	Mix_Chunk *overSound = Mix_LoadWAV((audio_dir + "over.wav").c_str());
 
-	//// Set up a Sound Effect chunk for the button pressed state
-	//Mix_Chunk *pressedSound = Mix_LoadWAV((audio_dir + "pressed.wav").c_str());
+	Mix_Chunk *pressedSound = Mix_LoadWAV((audio_dir + "select.wav").c_str());
 
-	//// Set up a Sound Effect chunk for the enemy
-	//Mix_Chunk *explosionSound = Mix_LoadWAV((audio_dir + "enemy.wav").c_str());
+	//Mix_Chunk *explosionSound = Mix_LoadWAV((audio_dir + "Germ.wav").c_str());
 
-	// Bool value to control the over sound effect and the buttons
 	bool alreadyOver = false;
 
 
 
-	// Create the players
-//	Player player1 = Player(renderer, 0, images_dir.c_str(), audio_dir.c_str(), 250.0, 500.0);
-//	Player player2 = Player(renderer, 1, images_dir.c_str(), audio_dir.c_str(), 750.0, 500.0);
+	/////////////////////////////////////////
+	//           ***** LEVEL 1 *****
+	/////////////////////////////////////////
+
+	// bg
+	SDL_Texture *l1bkgd = IMG_LoadTexture(renderer, (images_dir + "l1-bg.png").c_str());
+	SDL_Rect l1bkgdRect;
+	l1bkgdRect.x = 0;
+	l1bkgdRect.y = 0;
+	l1bkgdRect.w = 4096;
+	l1bkgdRect.h = 768;
+	float X_pos = 0.0f, Y_pos = 0.0f;
+
+
+	// level 1 door
+	SDL_Texture *door = IMG_LoadTexture(renderer, (images_dir + "door.png").c_str());
+	SDL_Rect doorRect;
+	doorRect.x = 3670;
+	doorRect.y = 145;
+	doorRect.w = 378;
+	doorRect.h = 490;
+	float doorX_pos = 3670.0f, doorY_pos = 145.0f;
+
+
+	// card HUD
+	SDL_Texture *Cardbkgd = IMG_LoadTexture(renderer, (images_dir + "cards-empty.png").c_str());
+	SDL_Rect CardbkgdRect;
+	CardbkgdRect.x = 725;
+	CardbkgdRect.y = 16;
+	CardbkgdRect.w = 284;
+	CardbkgdRect.h = 91;
+
+	SDL_Texture *lilac = IMG_LoadTexture(renderer, (images_dir + "cards-lilac.png").c_str());
+
+	SDL_Texture *yellow = IMG_LoadTexture(renderer, (images_dir + "cards-yellow.png").c_str());
+
+	SDL_Texture *mint = IMG_LoadTexture(renderer, (images_dir + "cards-mint.png").c_str());
+
+	bool haveLilac = false;
+	bool haveYellow = false;
+	bool haveMint = false;
+
+	Pickup lilacCard = Pickup(renderer, images_dir.c_str(), 0, 750.0f, 400.0f);
+	Pickup yellowCard = Pickup(renderer, images_dir.c_str(), 1, 1600.0f, 400.0f);
+	Pickup mintCard = Pickup(renderer, images_dir.c_str(), 2, 3000.0f, 400.0f);
+
+
+
+	/////////////////////////////////////////
+	//           ***** LEVEL 2 *****
+	/////////////////////////////////////////
+
+	// bg
+	SDL_Texture *l2bkgd = IMG_LoadTexture(renderer, (images_dir + "l2-bg.png").c_str());
+	SDL_Rect l2bkgdRect;
+	l2bkgdRect.x = 0;
+	l2bkgdRect.y = 0;
+	l2bkgdRect.w = 4096;
+	l2bkgdRect.h = 768;
+	float X_pos2 = 0.0f, Y_pos2 = 0.0f;
+
+
+	// level 2 gate
+	SDL_Texture *gate = IMG_LoadTexture(renderer, (images_dir + "gate.png").c_str());
+	SDL_Rect gateRect;
+	gateRect.x = 3900;
+	gateRect.y = 400;
+	gateRect.w = 80;
+	gateRect.h = 325;
+	float gateX_pos = 3900, gateY_pos = 400.0f;
+
+
+	// key HUD
+
+	SDL_Texture *keyB = IMG_LoadTexture(renderer, (images_dir + "key-empty.png").c_str());
+	SDL_Texture *keyM = IMG_LoadTexture(renderer, (images_dir + "key-bar.png").c_str());
+	SDL_Texture *keyF = IMG_LoadTexture(renderer, (images_dir + "key-top.png").c_str());
+
+	SDL_Rect keyRect;
+	keyRect.x = 725;
+	keyRect.y = 16;
+	keyRect.w = 284;
+	keyRect.h = 91;
+
+	SDL_Rect movingRect;
+	movingRect.x = 725;
+	movingRect.y = 16;
+	movingRect.w = 284;
+	movingRect.h = 91;
+
+	Pickup key1 = Pickup(renderer, images_dir.c_str(), 3, 775.0f, 525.0f);
+	Pickup key2 = Pickup(renderer, images_dir.c_str(), 4, 1500.0f, 525.0f);
+	Pickup key3 = Pickup(renderer, images_dir.c_str(), 4, 2200.0f, 525.0f);
+	Pickup key4 = Pickup(renderer, images_dir.c_str(), 4, 2900.0f, 525.0f);
+	Pickup key5 = Pickup(renderer, images_dir.c_str(), 5, 3600.0f, 525.0f);
+
+	float currentKeys = 0.0f;
+	float maxKeys = 100.0f;
+
+
+
+
+
+	// player
+	Player player = Player(renderer, images_dir.c_str(), audio_dir.c_str(), 250.0, 500.0);
+
+	// germs
+	Germ germ1 = Germ(renderer, images_dir.c_str(), audio_dir.c_str(), 800.0f, 500.0f);
+	Germ germ2 = Germ(renderer, images_dir.c_str(), audio_dir.c_str(), 1400.0f, 500.0f);
+	Germ germ3 = Germ(renderer, images_dir.c_str(), audio_dir.c_str(), 2000.0f, 500.0f);
+	Germ germ4 = Germ(renderer, images_dir.c_str(), audio_dir.c_str(), 2600.0f, 500.0f);
+	Germ germ5 = Germ(renderer, images_dir.c_str(), audio_dir.c_str(), 3200.0f, 500.0f);
+	Germ germ6 = Germ(renderer, images_dir.c_str(), audio_dir.c_str(), 3800.0f, 500.0f);
+
+	// viruses
+	Virus turret1 = Virus(renderer, images_dir.c_str(), audio_dir.c_str(), 700.0f, 500.0f);
+	Virus turret2 = Virus(renderer, images_dir.c_str(), audio_dir.c_str(), 1400.0f, 500.0f);
+	Virus turret3 = Virus(renderer, images_dir.c_str(), audio_dir.c_str(), 2100.0f, 500.0f);
+	Virus turret4 = Virus(renderer, images_dir.c_str(), audio_dir.c_str(), 2800.0f, 500.0f);
+	Virus turret5 = Virus(renderer, images_dir.c_str(), audio_dir.c_str(), 3500.0f, 500.0f);
 
 
 
@@ -613,21 +766,20 @@ int main(int argc, char* argv[])
 		switch (gameState)
 		{
 		case MENU:
+
+			Mix_PlayMusic(bgm, -1);
+
 			alreadyOver = false;
 			menu = true;
 
 			while (menu)
 			{
-				// Set up frame rate for the section, or CASE
 				thisTime = SDL_GetTicks();
 				deltaTime = (float)(thisTime - lastTime) / 1000;
 				lastTime = thisTime;
 
-
-				// Check for input events
 				if (SDL_PollEvent(&event))
 				{
-					// Check to see if the SDL window is closed - player clicks X in window
 					if (event.type == SDL_QUIT)
 					{
 						quit = true;
@@ -644,17 +796,16 @@ int main(int argc, char* argv[])
 							{
 								if (startOver)
 								{
-									// Play the over sound - plays fine through levels, must pause for quit
-									//Mix_PlayChannel(-1, pressedSound, 0);
+									Mix_PlayChannel(-1, pressedSound, 0);
 
 									menu = false;
-									gameState = PLAY;
+									gameState = LEVEL1;
 									startOver = false;
 								}
 
 								if (backstoryOver)
 								{
-									//Mix_PlayChannel(-1, pressedSound, 0);
+									Mix_PlayChannel(-1, pressedSound, 0);
 
 									menu = false;
 									gameState = BACKSTORY;
@@ -663,7 +814,7 @@ int main(int argc, char* argv[])
 
 								if (instructionsOver)
 								{
-									//Mix_PlayChannel(-1, pressedSound, 0);
+									Mix_PlayChannel(-1, pressedSound, 0);
 
 									menu = false;
 									gameState = INSTRUCTIONS;
@@ -672,7 +823,7 @@ int main(int argc, char* argv[])
 
 								if (quitOver)
 								{
-									//Mix_PlayChannel(-1, pressedSound, 0);
+									Mix_PlayChannel(-1, pressedSound, 0);
 									SDL_Delay(1000);
 
 									menu = false;
@@ -691,95 +842,78 @@ int main(int argc, char* argv[])
 				}
 
 
-				// Update
 				UpdateBackground();
-
-				// Update cursor
 				UpdateCursor(deltaTime);
 
-
-
-				// Check for collision between cursor active state and buttons
 				startOver = SDL_HasIntersection(&activePos, &startPos);
 				backstoryOver = SDL_HasIntersection(&activePos, &backstoryPos);
 				instructionsOver = SDL_HasIntersection(&activePos, &instructionsPos);
 				quitOver = SDL_HasIntersection(&activePos, &quitPos);
 
+				if (startOver || backstoryOver || instructionsOver || quitOver)
+				{
+					if (alreadyOver == false)
+					{
+						Mix_PlayChannel(-1, overSound, 0);
+						alreadyOver = true;
+					}
+				}
 
-
-				//// If the cursor is over a button, play the over sound
-				//if (players1Over || players2Over || instructionsOver || quitOver)
-				//{
-				//	if (alreadyOver == false)
-				//	{
-				//		Mix_PlayChannel(-1, overSound, 0);
-				//		alreadyOver = true;
-				//	}
-				//}
-
-				//// If the cursor is not over any button, reset the alreadyOver variable
-				//if (!players1Over && !players2Over && !instructionsOver && !quitOver)
-				//{
-				//	alreadyOver = false;
-				//}
+				if (!startOver && !backstoryOver && !instructionsOver && !quitOver)
+				{
+					alreadyOver = false;
+				}
 
 
 
-				// Start drawing
-				// Clear SDL renderer
 				SDL_RenderClear(renderer);
 
-				// Draw the background image
-				SDL_RenderCopy(renderer, bkgd1, NULL, &bkgd1Pos);
-				SDL_RenderCopy(renderer, bkgd2, NULL, &bkgd2Pos);
+					SDL_RenderCopy(renderer, bkgd1, NULL, &bkgd1Pos);
+					SDL_RenderCopy(renderer, bkgd2, NULL, &bkgd2Pos);
 
-				// Draw title
-				SDL_RenderCopy(renderer, title, NULL, &titlePos);
+					SDL_RenderCopy(renderer, ronaMenu, NULL, &ronaMenuPos);
 
-
-				// Draw start
-				if (startOver)
-				{
-					SDL_RenderCopy(renderer, startO, NULL, &startPos);
-				}
-				else {
-					SDL_RenderCopy(renderer, startN, NULL, &startPos);
-				}
-
-				// Draw instructions
-				if (instructionsOver)
-				{
-					SDL_RenderCopy(renderer, instructionsO, NULL, &instructionsPos);
-				}
-				else {
-					SDL_RenderCopy(renderer, instructionsN, NULL, &instructionsPos);
-				}
+					SDL_RenderCopy(renderer, title, NULL, &titlePos);
 
 
-				// Draw backstory
-				if (backstoryOver)
-				{
-					SDL_RenderCopy(renderer, backstoryO, NULL, &backstoryPos);
-				}
-				else {
-					SDL_RenderCopy(renderer, backstoryN, NULL, &backstoryPos);
-				}
-
-				// Draw quit
-				if (quitOver)
-				{
-					SDL_RenderCopy(renderer, quitO, NULL, &quitPos);
-				}
-				else {
-					SDL_RenderCopy(renderer, quitN, NULL, &quitPos);
-				}
+					if (startOver)
+					{
+						SDL_RenderCopy(renderer, startO, NULL, &startPos);
+					}
+					else {
+						SDL_RenderCopy(renderer, startN, NULL, &startPos);
+					}
 
 
-				// Draw cursor
-				SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
+					if (instructionsOver)
+					{
+						SDL_RenderCopy(renderer, instructionsO, NULL, &instructionsPos);
+					}
+					else {
+						SDL_RenderCopy(renderer, instructionsN, NULL, &instructionsPos);
+					}
 
 
-				// SDL render present
+					if (backstoryOver)
+					{
+						SDL_RenderCopy(renderer, backstoryO, NULL, &backstoryPos);
+					}
+					else {
+						SDL_RenderCopy(renderer, backstoryN, NULL, &backstoryPos);
+					}
+
+
+					if (quitOver)
+					{
+						SDL_RenderCopy(renderer, quitO, NULL, &quitPos);
+					}
+					else {
+						SDL_RenderCopy(renderer, quitN, NULL, &quitPos);
+					}
+
+
+					SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
+
 				SDL_RenderPresent(renderer);
 			}
 
@@ -796,16 +930,13 @@ int main(int argc, char* argv[])
 
 			while (instructions)
 			{
-				// Set up frame rate for the section, or CASE
 				thisTime = SDL_GetTicks();
 				deltaTime = (float)(thisTime - lastTime) / 1000;
 				lastTime = thisTime;
 
 
-				// Check for input events
 				if (SDL_PollEvent(&event))
 				{
-					// Check to see if the SDL window is closed - player clicks X in window
 					if (event.type == SDL_QUIT)
 					{
 						quit = true;
@@ -820,8 +951,24 @@ int main(int argc, char* argv[])
 						{
 							if (event.cbutton.button == SDL_CONTROLLER_BUTTON_A)
 							{
+								if (startOver) {
+									Mix_PlayChannel(-1, pressedSound, 0);
+
+									instructions = false;
+									gameState = LEVEL1;
+									startOver = false;
+								}
+
+								if (backstoryOver) {
+									Mix_PlayChannel(-1, pressedSound, 0);
+
+									instructions = false;
+									gameState = BACKSTORY;
+									backstoryOver = false;
+								}
+
 								if (menuOver) {
-									//Mix_PlayChannel(-1, pressedSound, 0);
+									Mix_PlayChannel(-1, pressedSound, 0);
 
 									instructions = false;
 									gameState = MENU;
@@ -841,62 +988,69 @@ int main(int argc, char* argv[])
 				UpdateCursor(deltaTime);
 
 
-				// Collision
+				startOver = SDL_HasIntersection(&activePos, &startPosInst);
+				backstoryOver = SDL_HasIntersection(&activePos, &backstoryPosInst);
 				menuOver = SDL_HasIntersection(&activePos, &menuNPos);
 
 
-				if (menuOver)
+				if (startOver || backstoryOver || menuOver || quitOver)
 				{
 					if (alreadyOver == false)
 					{
-						//Mix_PlayChannel(-1, overSound, 0);
+						Mix_PlayChannel(-1, overSound, 0);
 						alreadyOver = true;
 					}
 				}
 
-				if (!menuOver)
+				if (!startOver && !backstoryOver && !menuOver && !quitOver)
 				{
 					alreadyOver = false;
 				}
 
 
-				// Start drawing
 				SDL_RenderClear(renderer);
 
-				SDL_RenderCopy(renderer, bkgd1, NULL, &bkgd1Pos);
-				SDL_RenderCopy(renderer, bkgd2, NULL, &bkgd2Pos);
+					SDL_RenderCopy(renderer, bkgd1, NULL, &bkgd1Pos);
+					SDL_RenderCopy(renderer, bkgd2, NULL, &bkgd2Pos);
 
-				// Draw title
-				SDL_RenderCopy(renderer, title, NULL, &titlePos);
+					SDL_RenderCopy(renderer, title, NULL, &titlePos);
 
-				// Draw instructions text
-				//SDL_RenderCopy(renderer, instructionsText, NULL, &instructionsTextPos);
+					SDL_RenderCopy(renderer, instructionsText, NULL, &instructionsTextPos);
 
 
-				// Draw menu
-				if (menuOver)
-				{
-					SDL_RenderCopy(renderer, menuO, NULL, &menuNPos);
-				}
-				else {
-					SDL_RenderCopy(renderer, menuN, NULL, &menuNPos);
-				}
+					if (startOver)
+					{
+						SDL_RenderCopy(renderer, startO, NULL, &startPosInst);
+					}
+					else {
+						SDL_RenderCopy(renderer, startN, NULL, &startPosInst);
+					}
 
 
-				// Draw cursor
-				SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
+					if (backstoryOver)
+					{
+						SDL_RenderCopy(renderer, backstoryO, NULL, &backstoryPosInst);
+					}
+					else {
+						SDL_RenderCopy(renderer, backstoryN, NULL, &backstoryPosInst);
+					}
 
 
-				// SDL render present
+					if (menuOver)
+					{
+						SDL_RenderCopy(renderer, menuO, NULL, &menuNPos);
+					}
+					else {
+						SDL_RenderCopy(renderer, menuN, NULL, &menuNPos);
+					}
+
+
+					SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
+
 				SDL_RenderPresent(renderer);
 
 			}
 			break;	// end instructions case
-
-
-
-
-
 
 
 
@@ -908,20 +1062,17 @@ int main(int argc, char* argv[])
 
 			while (backstory)
 			{
-				// Set up frame rate for the section, or CASE
 				thisTime = SDL_GetTicks();
 				deltaTime = (float)(thisTime - lastTime) / 1000;
 				lastTime = thisTime;
 
 
-				// Check for input events
 				if (SDL_PollEvent(&event))
 				{
-					// Check to see if the SDL window is closed - player clicks X in window
 					if (event.type == SDL_QUIT)
 					{
 						quit = true;
-						instructions = false;
+						backstory = false;
 						break;
 					}
 
@@ -932,8 +1083,24 @@ int main(int argc, char* argv[])
 						{
 							if (event.cbutton.button == SDL_CONTROLLER_BUTTON_A)
 							{
+								if (startOver) {
+									Mix_PlayChannel(-1, pressedSound, 0);
+
+									backstory = false;
+									gameState = LEVEL1;
+									startOver = false;
+								}
+
+								if (instructionsOver) {
+									Mix_PlayChannel(-1, pressedSound, 0);
+
+									backstory = false;
+									gameState = INSTRUCTIONS;
+									instructionsOver = false;
+								}
+
 								if (menuOver) {
-									//Mix_PlayChannel(-1, pressedSound, 0);
+									Mix_PlayChannel(-1, pressedSound, 0);
 
 									backstory = false;
 									gameState = MENU;
@@ -953,39 +1120,52 @@ int main(int argc, char* argv[])
 				UpdateCursor(deltaTime);
 
 
-				// Collision
+				startOver = SDL_HasIntersection(&activePos, &startPos);
+				instructionsOver = SDL_HasIntersection(&activePos, &instructionsPos);
 				menuOver = SDL_HasIntersection(&activePos, &menuNPos);
 
 
-				if (menuOver)
+				if (startOver || menuOver || instructionsOver || quitOver)
 				{
 					if (alreadyOver == false)
 					{
-						//Mix_PlayChannel(-1, overSound, 0);
+						Mix_PlayChannel(-1, overSound, 0);
 						alreadyOver = true;
 					}
 				}
 
-				if (!menuOver)
+				if (!startOver && !menuOver && !instructionsOver && !quitOver)
 				{
 					alreadyOver = false;
 				}
 
 
-				// Start drawing
 				SDL_RenderClear(renderer);
 
 				SDL_RenderCopy(renderer, bkgd1, NULL, &bkgd1Pos);
 				SDL_RenderCopy(renderer, bkgd2, NULL, &bkgd2Pos);
 
-				// Draw title
 				SDL_RenderCopy(renderer, title, NULL, &titlePos);
 
-				// Draw instructions text
-				//SDL_RenderCopy(renderer, instructionsText, NULL, &instructionsTextPos);
+				SDL_RenderCopy(renderer, backstoryText, NULL, &backstoryTextPos);
 
 
-				// Draw menu
+				if (startOver)
+				{
+					SDL_RenderCopy(renderer, startO, NULL, &startPos);
+				}
+				else {
+					SDL_RenderCopy(renderer, startN, NULL, &startPos);
+				}
+
+				if (instructionsOver)
+				{
+					SDL_RenderCopy(renderer, instructionsO, NULL, &instructionsPos);
+				}
+				else {
+					SDL_RenderCopy(renderer, instructionsN, NULL, &instructionsPos);
+				}
+
 				if (menuOver)
 				{
 					SDL_RenderCopy(renderer, menuO, NULL, &menuNPos);
@@ -995,11 +1175,8 @@ int main(int argc, char* argv[])
 				}
 
 
-				// Draw cursor
 				SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
 
-
-				// SDL render present
 				SDL_RenderPresent(renderer);
 
 			}
@@ -1009,6 +1186,650 @@ int main(int argc, char* argv[])
 
 
 
+		case LEVEL1:
+
+			Mix_PlayMusic(bgl1, -1);
+
+			alreadyOver = false;
+			level1 = true;
+
+			player.Reset();
+
+			l1bkgdRect.x = 0;
+			l2bkgdRect.x = 0;
+
+			pos_X = 0;
+			pos_Y = 0;
+			X_pos = 0;
+			X_pos = 0;
+			X_pos2 = 0;
+
+//			doorRect.x = 3670;
+
+			// germs
+			germ1 = Germ(renderer, images_dir.c_str(), audio_dir.c_str(), 800.0f, 500.0f);
+			germ2 = Germ(renderer, images_dir.c_str(), audio_dir.c_str(), 1400.0f, 500.0f);
+			germ3 = Germ(renderer, images_dir.c_str(), audio_dir.c_str(), 2000.0f, 500.0f);
+			germ4 = Germ(renderer, images_dir.c_str(), audio_dir.c_str(), 2600.0f, 500.0f);
+			germ5 = Germ(renderer, images_dir.c_str(), audio_dir.c_str(), 3200.0f, 500.0f);
+			germ6 = Germ(renderer, images_dir.c_str(), audio_dir.c_str(), 3800.0f, 500.0f);
+
+
+
+			while (level1)
+			{
+				thisTime = SDL_GetTicks();
+				deltaTime = (float)(thisTime - lastTime) / 1000;
+				lastTime = thisTime;
+
+				if (SDL_PollEvent(&event))
+				{
+					if (event.type == SDL_QUIT)
+					{
+						quit = true;
+						level1 = false;
+						break;
+					}
+
+					switch (event.type)
+					{
+					case SDL_CONTROLLERBUTTONDOWN:
+						if (event.cdevice.which == 0)
+						{
+							if (event.cbutton.button == SDL_CONTROLLER_BUTTON_X)
+							{
+								level1 = false;
+								gameState = WIN;
+							}
+
+							if (event.cbutton.button == SDL_CONTROLLER_BUTTON_Y)
+							{
+								level1 = false;
+								gameState = LOSE;
+							}
+
+							if (player.active)
+								player.OnControllerButton(event.cbutton);
+						}
+						break;
+
+					case SDL_CONTROLLERAXISMOTION:
+						if (player.active)
+							player.OnControllerAxis(event.caxis, deltaTime);
+						break;
+					}
+				}
+
+
+				if ((player.posRect.x >= 700 - player.posRect.w) && (player.posRect.x < 4096) && (player.xDir != 0)) {
+					X_pos -= (player.speed) * deltaTime;
+					doorX_pos -= (player.speed) * deltaTime;
+
+					if ((l1bkgdRect.x > -3072)) {
+						l1bkgdRect.x = (int)(X_pos + 0.5f);
+						doorRect.x = (int)(doorX_pos + 0.5f);
+
+
+						lilacCard.RonaMoveX(-player.speed, deltaTime);
+						yellowCard.RonaMoveX(-player.speed, deltaTime);
+						mintCard.RonaMoveX(-player.speed, deltaTime);
+
+						germ1.GermMoveX(-player.speed, deltaTime);
+						germ2.GermMoveX(-player.speed, deltaTime);
+						germ3.GermMoveX(-player.speed, deltaTime);
+						germ4.GermMoveX(-player.speed, deltaTime);
+						germ5.GermMoveX(-player.speed, deltaTime);
+						germ6.GermMoveX(-player.speed, deltaTime);
+					}
+					else {
+
+						X_pos = l1bkgdRect.x;
+						doorX_pos = doorRect.x;
+					}
+				}
+
+				if ((player.posRect.x <= 224) && (player.posRect.x < 4096) && (player.xDir != 0)) {
+					X_pos += (player.speed) * deltaTime;
+					doorX_pos += (player.speed) * deltaTime;
+
+					if ((l1bkgdRect.x < 0)) {
+						l1bkgdRect.x = (int)(X_pos + 0.5f);
+						doorRect.x = (int)(doorX_pos + 0.5f);
+
+						lilacCard.RonaMoveX(player.speed, deltaTime);
+						yellowCard.RonaMoveX(player.speed, deltaTime);
+						mintCard.RonaMoveX(player.speed, deltaTime);
+
+						germ1.GermMoveX(player.speed, deltaTime);
+						germ2.GermMoveX(player.speed, deltaTime);
+						germ3.GermMoveX(player.speed, deltaTime);
+						germ4.GermMoveX(player.speed, deltaTime);
+						germ5.GermMoveX(player.speed, deltaTime);
+						germ6.GermMoveX(player.speed, deltaTime);
+					}
+					else {
+
+						X_pos = l1bkgdRect.x;
+						doorX_pos = doorRect.x;
+					}
+				}
+
+
+				UpdateBackground();
+
+				if (player.active)
+					player.Update(deltaTime, renderer);
+
+				germ1.Update(deltaTime, player.posRect);
+				germ2.Update(deltaTime, player.posRect);
+				germ3.Update(deltaTime, player.posRect);
+				germ4.Update(deltaTime, player.posRect);
+				germ5.Update(deltaTime, player.posRect);
+				germ6.Update(deltaTime, player.posRect);
+
+
+
+				for (int i = 0; i < player.bulletList.size(); i++)
+				{
+					if (SDL_HasIntersection(&germ1.germRect, &player.bulletList[i].posRect))
+					{
+						player.bulletList[i].Reset();
+						if (germ1.active == true)
+						{
+							germ1.RemoveHealth();
+						}
+						break;
+					}
+
+					if (SDL_HasIntersection(&germ2.germRect, &player.bulletList[i].posRect))
+					{
+						player.bulletList[i].Reset();
+						if (germ2.active == true)
+						{
+							germ2.RemoveHealth();
+						}
+						break;
+					}
+
+					if (SDL_HasIntersection(&germ3.germRect, &player.bulletList[i].posRect))
+					{
+						player.bulletList[i].Reset();
+						if (germ3.active == true)
+						{
+							germ3.RemoveHealth();
+						}
+						break;
+					}
+
+					if (SDL_HasIntersection(&germ4.germRect, &player.bulletList[i].posRect))
+					{
+						player.bulletList[i].Reset();
+						if (germ4.active == true)
+						{
+							germ4.RemoveHealth();
+						}
+						break;
+					}
+
+					if (SDL_HasIntersection(&germ5.germRect, &player.bulletList[i].posRect))
+					{
+						player.bulletList[i].Reset();
+						if (germ5.active == true)
+						{
+							germ5.RemoveHealth();
+						}
+						break;
+					}
+
+					if (SDL_HasIntersection(&germ6.germRect, &player.bulletList[i].posRect))
+					{
+						player.bulletList[i].Reset();
+						if (germ6.active == true)
+						{
+							germ6.RemoveHealth();
+						}
+						break;
+					}
+				}
+
+
+
+				if (SDL_HasIntersection(&player.posRect, &lilacCard.cardRect)) {
+					haveLilac = true;
+					lilacCard.active = false;
+					lilacCard.cardRect.x = -5000;
+					lilacCard.cardRect.y = -5000;
+				}
+
+				if (SDL_HasIntersection(&player.posRect, &yellowCard.cardRect)) {
+					haveYellow = true;
+					yellowCard.active = false;
+					yellowCard.cardRect.x = -5000;
+					yellowCard.cardRect.y = -5000;
+				}
+
+				if (SDL_HasIntersection(&player.posRect, &mintCard.cardRect)) {
+					haveMint = true;
+					mintCard.active = false;
+					mintCard.cardRect.x = -5000;
+					mintCard.cardRect.y = -5000;
+				}
+
+
+
+				if (SDL_HasIntersection(&player.posRect, &germ1.germRect))
+				{
+					player.GermHit();
+				}
+
+				if (SDL_HasIntersection(&player.posRect, &germ2.germRect))
+				{
+					player.GermHit();
+				}
+
+				if (SDL_HasIntersection(&player.posRect, &germ3.germRect))
+				{
+					player.GermHit();
+				}
+
+				if (SDL_HasIntersection(&player.posRect, &germ4.germRect))
+				{
+					player.GermHit();
+				}
+
+				if (SDL_HasIntersection(&player.posRect, &germ5.germRect))
+				{
+					player.GermHit();
+				}
+
+				if (SDL_HasIntersection(&player.posRect, &germ6.germRect))
+				{
+					player.GermHit();
+				}
+
+				if (player.playerHealth <= 0)
+				{
+					level1 = false;
+					gameState = LOSE;
+				}
+
+
+
+				if ((SDL_HasIntersection(&player.posRect, &doorRect)) && haveLilac && haveMint && haveYellow)
+				{
+					level1 = false;
+					gameState = LEVEL2;
+				}
+
+
+
+				SDL_RenderClear(renderer);
+
+					SDL_RenderCopy(renderer, l1bkgd, NULL, &l1bkgdRect);
+
+					SDL_RenderCopy(renderer, door, NULL, &doorRect);
+
+					SDL_RenderCopy(renderer, Cardbkgd, NULL, &CardbkgdRect);
+
+					if (haveLilac)
+						SDL_RenderCopy(renderer, lilac, NULL, &CardbkgdRect);
+					if (haveYellow)
+						SDL_RenderCopy(renderer, yellow, NULL, &CardbkgdRect);
+					if (haveMint)
+						SDL_RenderCopy(renderer, mint, NULL, &CardbkgdRect);
+
+					if (lilacCard.active)
+						lilacCard.Draw(renderer);
+					if (yellowCard.active)
+						yellowCard.Draw(renderer);
+					if (mintCard.active)
+						mintCard.Draw(renderer);
+
+
+					player.Draw(renderer);
+
+					germ1.Draw(renderer);
+					germ2.Draw(renderer);
+					germ3.Draw(renderer);
+					germ4.Draw(renderer);
+					germ5.Draw(renderer);
+					germ6.Draw(renderer);
+
+				SDL_RenderPresent(renderer);
+
+			}
+			break;	// end level 1 case
+
+
+
+
+
+		case LEVEL2:
+
+			Mix_PlayMusic(bgl2, -1);
+
+			alreadyOver = false;
+			level2 = true;
+
+			player.Reset();
+
+			l1bkgdRect.x = 0;
+			l2bkgdRect.x = 0;
+			gateRect.x = 3900;
+
+			pos_X = 0;
+			X_pos = 0;
+			X_pos2 = 0;
+
+			turret1 = Virus(renderer, images_dir.c_str(), audio_dir.c_str(), 700.0f, 500.0f);
+			turret2 = Virus(renderer, images_dir.c_str(), audio_dir.c_str(), 1400.0f, 500.0f);
+			turret3 = Virus(renderer, images_dir.c_str(), audio_dir.c_str(), 2100.0f, 500.0f);
+			turret4 = Virus(renderer, images_dir.c_str(), audio_dir.c_str(), 2800.0f, 500.0f);
+			turret5 = Virus(renderer, images_dir.c_str(), audio_dir.c_str(), 3500.0f, 500.0f);
+
+
+
+			while (level2)
+			{
+				thisTime = SDL_GetTicks();
+				deltaTime = (float)(thisTime - lastTime) / 1000;
+				lastTime = thisTime;
+
+				if (SDL_PollEvent(&event))
+				{
+					if (event.type == SDL_QUIT)
+					{
+						quit = true;
+						level2 = false;
+						break;
+					}
+
+					switch (event.type)
+					{
+					case SDL_CONTROLLERBUTTONDOWN:
+						if (event.cdevice.which == 0)
+						{
+							if (event.cbutton.button == SDL_CONTROLLER_BUTTON_X)
+							{
+								level2 = false;
+								gameState = WIN;
+							}
+
+							if (event.cbutton.button == SDL_CONTROLLER_BUTTON_Y)
+							{
+								level2 = false;
+								gameState = LOSE;
+							}
+
+							if (player.active)
+								player.OnControllerButton(event.cbutton);
+						}
+						break;
+
+					case SDL_CONTROLLERAXISMOTION:
+						if (player.active)
+							player.OnControllerAxis(event.caxis, deltaTime);
+						break;
+					}
+				}
+
+
+				if ((player.posRect.x >= 750 - player.posRect.w) && (player.posRect.x < 4096) && (player.xDir != 0)) {
+					X_pos2 -= (player.speed) * deltaTime;
+					gateX_pos -= (player.speed) * deltaTime;
+
+					if ((l2bkgdRect.x > -3072)) {
+						l2bkgdRect.x = (int)(X_pos2 + 0.5f);
+						gateRect.x = (int)(gateX_pos + 0.5f);
+
+						key1.RonaMoveX(-player.speed, deltaTime);
+						key2.RonaMoveX(-player.speed, deltaTime);
+						key3.RonaMoveX(-player.speed, deltaTime);
+						key4.RonaMoveX(-player.speed, deltaTime);
+						key5.RonaMoveX(-player.speed, deltaTime);
+
+						turret1.PlayerMoveX(-player.speed, deltaTime);
+						turret2.PlayerMoveX(-player.speed, deltaTime);
+						turret3.PlayerMoveX(-player.speed, deltaTime);
+						turret4.PlayerMoveX(-player.speed, deltaTime);
+						turret5.PlayerMoveX(-player.speed, deltaTime);
+					}
+					else {
+
+						X_pos2 = l2bkgdRect.x;
+						gateX_pos = gateRect.x;
+					}
+				}
+
+				if ((player.posRect.x <= 224) && (player.posRect.x < 4096) && (player.xDir != 0)) {
+					X_pos2 += (player.speed) * deltaTime;
+					gateX_pos += (player.speed) * deltaTime;
+
+
+					if ((l2bkgdRect.x < 0)) {
+						l2bkgdRect.x = (int)(X_pos2 + 0.5f);
+						gateRect.x = (int)(gateX_pos + 0.5f);
+
+						key1.RonaMoveX(player.speed, deltaTime);
+						key2.RonaMoveX(player.speed, deltaTime);
+						key3.RonaMoveX(player.speed, deltaTime);
+						key4.RonaMoveX(player.speed, deltaTime);
+						key5.RonaMoveX(player.speed, deltaTime);
+
+						turret1.PlayerMoveX(player.speed, deltaTime);
+						turret2.PlayerMoveX(player.speed, deltaTime);
+						turret3.PlayerMoveX(player.speed, deltaTime);
+						turret4.PlayerMoveX(player.speed, deltaTime);
+						turret5.PlayerMoveX(player.speed, deltaTime);
+					}
+					else {
+
+						X_pos2 = l2bkgdRect.x;
+						gateX_pos = gateRect.x;
+					}
+				}
+
+
+				UpdateBackground();
+
+				if (player.active)
+					player.Update(deltaTime, renderer);
+
+				turret1.Update(deltaTime, player.posRect);
+				turret2.Update(deltaTime, player.posRect);
+				turret3.Update(deltaTime, player.posRect);
+				turret4.Update(deltaTime, player.posRect);
+				turret5.Update(deltaTime, player.posRect);
+
+
+
+				// collision for viruses shooting the player
+				for (int i = 0; i < turret1.bulletList.size(); i++)
+				{
+					if (SDL_HasIntersection(&player.posRect, &turret1.bulletList[i].posRect))
+					{
+						turret1.bulletList[i].Reset();
+						player.BulletHit();
+						break;
+					}
+				}
+
+				for (int i = 0; i < turret2.bulletList.size(); i++)
+				{
+					if (SDL_HasIntersection(&player.posRect, &turret2.bulletList[i].posRect))
+					{
+						turret2.bulletList[i].Reset();
+						player.BulletHit();
+						break;
+					}
+				}
+
+				for (int i = 0; i < turret3.bulletList.size(); i++)
+				{
+					if (SDL_HasIntersection(&player.posRect, &turret3.bulletList[i].posRect))
+					{
+						turret3.bulletList[i].Reset();
+						player.BulletHit();
+						break;
+					}
+				}
+
+				for (int i = 0; i < turret4.bulletList.size(); i++)
+				{
+					if (SDL_HasIntersection(&player.posRect, &turret4.bulletList[i].posRect))
+					{
+						turret4.bulletList[i].Reset();
+						player.BulletHit();
+						break;
+					}
+				}
+
+				for (int i = 0; i < turret5.bulletList.size(); i++)
+				{
+					if (SDL_HasIntersection(&player.posRect, &turret5.bulletList[i].posRect))
+					{
+						turret5.bulletList[i].Reset();
+						player.BulletHit();
+						break;
+					}
+				}
+
+				if (player.playerHealth <= 0)
+				{
+					level2 = false;
+					gameState = LOSE;
+				}
+
+				if ((SDL_HasIntersection(&player.posRect, &gateRect)) && !key1.active && 
+					!key2.active && !key3.active && !key4.active && !key5.active)
+				{
+					level2 = false;
+					gameState = WIN;
+				}
+
+
+
+
+				// collision for player shooting turrets
+				for (int i = 0; i < player.bulletList.size(); i++)
+				{
+					if (SDL_HasIntersection(&turret1.baseRect, &player.bulletList[i].posRect))
+					{
+						player.bulletList[i].Reset();
+						turret1.RemoveHealth();
+						break;
+					}
+
+					if (SDL_HasIntersection(&turret2.baseRect, &player.bulletList[i].posRect))
+					{
+						player.bulletList[i].Reset();
+						turret2.RemoveHealth();
+						break;
+					}
+
+					if (SDL_HasIntersection(&turret3.baseRect, &player.bulletList[i].posRect))
+					{
+						player.bulletList[i].Reset();
+						turret3.RemoveHealth();
+						break;
+					}
+
+					if (SDL_HasIntersection(&turret4.baseRect, &player.bulletList[i].posRect))
+					{
+						player.bulletList[i].Reset();
+						turret4.RemoveHealth();
+						break;
+					}
+
+					if (SDL_HasIntersection(&turret5.baseRect, &player.bulletList[i].posRect))
+					{
+						player.bulletList[i].Reset();
+						turret5.RemoveHealth();
+						break;
+					}
+				}
+
+
+
+				if (SDL_HasIntersection(&player.posRect, &key1.cardRect))
+				{
+					key1.active = false;
+					key1.cardRect.x = -5000;
+					key1.cardRect.y = -5000;
+					currentKeys += 100 / 5;
+				}
+
+				if (SDL_HasIntersection(&player.posRect, &key2.cardRect))
+				{
+					key2.active = false;
+					key2.cardRect.x = -5000;
+					key2.cardRect.y = -5000;
+					currentKeys += 100 / 5;
+				}
+
+				if (SDL_HasIntersection(&player.posRect, &key3.cardRect))
+				{
+					key3.active = false;
+					key3.cardRect.x = -5000;
+					key3.cardRect.y = -5000;
+					currentKeys += 100 / 5;
+				}
+
+				if (SDL_HasIntersection(&player.posRect, &key4.cardRect))
+				{
+					key4.active = false;
+					key4.cardRect.x = -5000;
+					key4.cardRect.y = -5000;
+					currentKeys += 100 / 5;
+				} 
+
+				if (SDL_HasIntersection(&player.posRect, &key5.cardRect))
+				{
+					key5.active = false;
+					key5.cardRect.x = -5000;
+					key5.cardRect.y = -5000;
+					currentKeys += 100 / 5;
+				}
+
+				movingRect.w = currentKeys / maxKeys * 284;
+
+
+
+				SDL_RenderClear(renderer);
+
+					SDL_RenderCopy(renderer, l2bkgd, NULL, &l2bkgdRect);
+
+					SDL_RenderCopy(renderer, gate, NULL, &gateRect);
+
+					SDL_RenderCopy(renderer, keyB, NULL, &keyRect);
+					SDL_RenderCopy(renderer, keyM, NULL, &movingRect);
+					SDL_RenderCopy(renderer, keyF, NULL, &keyRect);
+
+
+					if (key1.active)
+						key1.Draw(renderer);
+					if (key2.active)
+						key2.Draw(renderer);
+					if (key3.active)
+						key3.Draw(renderer);
+					if (key4.active)
+						key4.Draw(renderer);
+					if (key5.active)
+						key5.Draw(renderer);
+
+
+					player.Draw(renderer);
+
+					turret1.Draw(renderer);
+					turret2.Draw(renderer);
+					turret3.Draw(renderer);
+					turret4.Draw(renderer);
+					turret5.Draw(renderer);
+
+				SDL_RenderPresent(renderer);
+
+			}
+			break;	// end level 2 case
 
 
 
@@ -1018,16 +1839,23 @@ int main(int argc, char* argv[])
 			alreadyOver = false;
 			win = true;
 
+			haveMint = false;
+			haveLilac = false;
+			haveYellow = false;
+
+			mintCard.active = true;
+			lilacCard.active = true;
+			yellowCard.active = true;
+			
+
 			while (win)
 			{
 				thisTime = SDL_GetTicks();
 				deltaTime = (float)(thisTime - lastTime) / 1000;
 				lastTime = thisTime;
 
-				// Check for input events
 				if (SDL_PollEvent(&event))
 				{
-					// Check to see if the SDL window is closed - player clicks X in window
 					if (event.type == SDL_QUIT)
 					{
 						quit = true;
@@ -1043,18 +1871,18 @@ int main(int argc, char* argv[])
 							if (event.cbutton.button == SDL_CONTROLLER_BUTTON_A)
 							{
 								if (menuOver) {
-									//Mix_PlayChannel(-1, pressedSound, 0);
+									Mix_PlayChannel(-1, pressedSound, 0);
 
 									win = false;
 									gameState = MENU;
 									menuOver = false;
 								}
 
-								if (playOver) {
-									//Mix_PlayChannel(-1, pressedSound, 0);
+								if (level1Over) {
+									Mix_PlayChannel(-1, pressedSound, 0);
 
 									win = false;
-									gameState = PLAY;
+									gameState = LEVEL1;
 									menuOver = false;
 								}
 							}
@@ -1071,63 +1899,55 @@ int main(int argc, char* argv[])
 				UpdateBackground();
 				UpdateCursor(deltaTime);
 
+				menuOver = SDL_HasIntersection(&activePos, &menuWPos);
+				level1Over = SDL_HasIntersection(&activePos, &playNPos);
 
-				//// collision
-				//menuOver = SDL_HasIntersection(&activePos, &menuNPos);
-				//playOver = SDL_HasIntersection(&activePos, &playNPos);
+				if (menuOver || level1Over)
+				{
+					if (alreadyOver == false)
+					{
+						Mix_PlayChannel(-1, overSound, 0);
+						alreadyOver = true;
+					}
+				}
 
-
-				//if (menuOver || playOver)
-				//{
-				//	if (alreadyOver == false)
-				//	{
-				//		Mix_PlayChannel(-1, overSound, 0);
-				//		alreadyOver = true;
-				//	}
-				//}
-
-				//if (!menuOver && !playOver)
-				//{
-				//	alreadyOver = false;
-				//}
+				if (!menuOver && !level1Over)
+				{
+					alreadyOver = false;
+				}
 
 
-				//// Start drawing
-				//SDL_RenderClear(renderer);
+				SDL_RenderClear(renderer);
 
-				//SDL_RenderCopy(renderer, bkgd1, NULL, &bkgd1Pos);
-				//SDL_RenderCopy(renderer, bkgd2, NULL, &bkgd2Pos);
+					SDL_RenderCopy(renderer, bkgd1, NULL, &bkgd1Pos);
+					SDL_RenderCopy(renderer, bkgd2, NULL, &bkgd2Pos);
 
-				//// Draw win text
-				//SDL_RenderCopy(renderer, winText, NULL, &winTextPos);
+					SDL_RenderCopy(renderer, winGraphic, NULL, &winGraphicPos);
 
-
-				//// Draw menu
-				//if (menuOver) {
-
-				//	SDL_RenderCopy(renderer, menuO, NULL, &menuNPos);
-				//}
-				//else {
-
-				//	SDL_RenderCopy(renderer, menuN, NULL, &menuNPos);
-				//}
-
-				//// Draw play again
-				//if (playOver) {
-
-				//	SDL_RenderCopy(renderer, playO, NULL, &playNPos);
-				//}
-				//else {
-
-				//	SDL_RenderCopy(renderer, playN, NULL, &playNPos);
-				//}
+					SDL_RenderCopy(renderer, winText, NULL, &winTextPos);
 
 
-				//// Draw cursor
-				//SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
+					if (menuOver) {
+
+						SDL_RenderCopy(renderer, menuO, NULL, &menuWPos);
+					}
+					else {
+
+						SDL_RenderCopy(renderer, menuN, NULL, &menuWPos);
+					}
+
+					if (level1Over) {
+
+						SDL_RenderCopy(renderer, playO, NULL, &playNPos);
+					}
+					else {
+
+						SDL_RenderCopy(renderer, playN, NULL, &playNPos);
+					}
 
 
-				// SDL render present
+					SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
+
 				SDL_RenderPresent(renderer);
 
 			}
@@ -1138,8 +1958,21 @@ int main(int argc, char* argv[])
 
 
 		case LOSE:
+
+			Mix_PlayMusic(bglose, -1);
+
 			alreadyOver = false;
 			lose = true;
+
+			haveMint = false;
+			haveLilac = false;
+			haveYellow = false;
+
+			key1.active = false;
+			key2.active = false;
+			key3.active = false;
+			key4.active = false;
+			key5.active = false;
 
 			while (lose)
 			{
@@ -1147,10 +1980,8 @@ int main(int argc, char* argv[])
 				deltaTime = (float)(thisTime - lastTime) / 1000;
 				lastTime = thisTime;
 
-				// Check for input events
 				if (SDL_PollEvent(&event))
 				{
-					// Check to see if the SDL window is closed - player clicks X in window
 					if (event.type == SDL_QUIT)
 					{
 						quit = true;
@@ -1165,20 +1996,19 @@ int main(int argc, char* argv[])
 						{
 							if (event.cbutton.button == SDL_CONTROLLER_BUTTON_A)
 							{
-								if (menuOver) {
-									//Mix_PlayChannel(-1, pressedSound, 0);
+								if (level1Over) {
+									Mix_PlayChannel(-1, pressedSound, 0);
 
+									lose = false;
+									gameState = LEVEL1;
+									level1Over = false;
+								}
+
+								if (menuOver) {
+									Mix_PlayChannel(-1, pressedSound, 0);
 
 									lose = false;
 									gameState = MENU;
-									menuOver = false;
-								}
-
-								if (playOver) {
-									//Mix_PlayChannel(-1, pressedSound, 0);
-
-									lose = false;
-									gameState = PLAY;
 									menuOver = false;
 								}
 							}
@@ -1195,63 +2025,56 @@ int main(int argc, char* argv[])
 				UpdateBackground();
 				UpdateCursor(deltaTime);
 
+				menuOver = SDL_HasIntersection(&activePos, &menuWPos);
+				level1Over = SDL_HasIntersection(&activePos, &playNPos);
 
-				//// collision
-				//menuOver = SDL_HasIntersection(&activePos, &menuNPos);
-				//playOver = SDL_HasIntersection(&activePos, &playNPos);
+				if (menuOver || level1Over)
+				{
+					if (alreadyOver == false)
+					{
+						Mix_PlayChannel(-1, overSound, 0);
+						alreadyOver = true;
+					}
+				}
 
-
-				//if (menuOver || playOver)
-				//{
-				//	if (alreadyOver == false)
-				//	{
-				//		Mix_PlayChannel(-1, overSound, 0);
-				//		alreadyOver = true;
-				//	}
-				//}
-
-				//if (!menuOver && !playOver)
-				//{
-				//	alreadyOver = false;
-				//}
+				if (!menuOver && !level1Over)
+				{
+					alreadyOver = false;
+				}
 
 
-				// Start drawing
 				SDL_RenderClear(renderer);
 
-				SDL_RenderCopy(renderer, bkgd1, NULL, &bkgd1Pos);
-				SDL_RenderCopy(renderer, bkgd2, NULL, &bkgd2Pos);
+					SDL_RenderCopy(renderer, bkgd1, NULL, &bkgd1Pos);
+					SDL_RenderCopy(renderer, bkgd2, NULL, &bkgd2Pos);
 
-				//// Draw lose text
-				//SDL_RenderCopy(renderer, loseText, NULL, &loseTextPos);
+					SDL_RenderCopy(renderer, bgFilter, NULL, &bgFilterPos);
 
-
-				//// Draw menu
-				//if (menuOver) {
-
-				//	SDL_RenderCopy(renderer, menuO, NULL, &menuNPos);
-				//}
-				//else {
-
-				//	SDL_RenderCopy(renderer, menuN, NULL, &menuNPos);
-				//}
-
-				//// Draw play again
-				//if (playOver) {
-
-				//	SDL_RenderCopy(renderer, playO, NULL, &playNPos);
-				//}
-				//else {
-
-				//	SDL_RenderCopy(renderer, playN, NULL, &playNPos);
-				//}
+					SDL_RenderCopy(renderer, loseText, NULL, &loseTextPos);
 
 
-				//// Draw cursor
-				//SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
+					if (menuOver) {
+
+						SDL_RenderCopy(renderer, menuO, NULL, &menuWPos);
+					}
+					else {
+
+						SDL_RenderCopy(renderer, menuN, NULL, &menuWPos);
+					}
 
 
-				// SDL render present
+					if (level1Over) {
+
+						SDL_RenderCopy(renderer, playO, NULL, &playNPos);
+					}
+					else {
+
+						SDL_RenderCopy(renderer, playN, NULL, &playNPos);
+					}
+
+
+					SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
+
 				SDL_RenderPresent(renderer);
 
 			}
