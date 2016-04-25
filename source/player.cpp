@@ -12,6 +12,8 @@ Player::Player(SDL_Renderer *renderer, string filePath, string audioPath, float 
 
 	fire = Mix_LoadWAV((audioPath + "fire.wav").c_str());
 
+	playerAmmo = 10;
+
 	xDir = 0;
 	yDir = 0;
 
@@ -132,9 +134,10 @@ void Player::OnControllerButton(const SDL_ControllerButtonEvent event)
 {
 	if (event.which == 0)
 	{
-		if (event.button == 0)
+		if (event.button == 0 && playerAmmo > 0)
 		{
 			CreateBullet();
+			playerAmmo--;
 		}
 	}
 }
@@ -175,6 +178,7 @@ void Player::Reset()
 	active = true;
 
 	playerHealth = 100;
+	playerAmmo = 10;
 }
 
 

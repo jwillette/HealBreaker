@@ -50,6 +50,8 @@ public:
 
 	vector<Bullet> bulletList;
 
+	int playerAmmo;
+
 	string playerPath, playerPathR;
 
 	SDL_Surface *surface, *surfaceR;

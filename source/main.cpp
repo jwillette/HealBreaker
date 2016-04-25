@@ -49,6 +49,7 @@
 #include "pickup.h"
 #include "germ.h"
 #include "virus.h"
+#include "ammo.h"
 
 using namespace std;
 
@@ -684,6 +685,8 @@ int main(int argc, char* argv[])
 
 
 
+
+
 	/////////////////////////////////////////
 	//           ***** LEVEL 2 *****
 	/////////////////////////////////////////
@@ -741,6 +744,14 @@ int main(int argc, char* argv[])
 
 	// player
 	Player player = Player(renderer, images_dir.c_str(), audio_dir.c_str(), 250.0, 500.0);
+
+	// ammo
+	Ammo ammo = Ammo(renderer, images_dir.c_str(), 5, 500);
+	Ammo ammo2 = Ammo(renderer, images_dir.c_str(), 1500, 500);
+	Ammo ammo3 = Ammo(renderer, images_dir.c_str(), 2100, 500);
+	Ammo ammo4 = Ammo(renderer, images_dir.c_str(), 2700, 500);
+	Ammo ammo5 = Ammo(renderer, images_dir.c_str(), 3300, 500);
+	Ammo ammo6 = Ammo(renderer, images_dir.c_str(), 3900, 500);
 
 	// germs
 	Germ germ1 = Germ(renderer, images_dir.c_str(), audio_dir.c_str(), 800.0f, 500.0f);
@@ -1261,7 +1272,7 @@ int main(int argc, char* argv[])
 				}
 
 
-				if ((player.posRect.x >= 700 - player.posRect.w) && (player.posRect.x < 4096) && (player.xDir != 0)) {
+				if ((player.posRect.x >= 600 - player.posRect.w) && (player.posRect.x < 4096) && (player.xDir != 0)) {
 					X_pos -= (player.speed) * deltaTime;
 					doorX_pos -= (player.speed) * deltaTime;
 
@@ -1273,6 +1284,13 @@ int main(int argc, char* argv[])
 						lilacCard.RonaMoveX(-player.speed, deltaTime);
 						yellowCard.RonaMoveX(-player.speed, deltaTime);
 						mintCard.RonaMoveX(-player.speed, deltaTime);
+
+						ammo.RonaMoveX(-player.speed, deltaTime);
+						ammo2.RonaMoveX(-player.speed, deltaTime);
+						ammo3.RonaMoveX(-player.speed, deltaTime);
+						ammo4.RonaMoveX(-player.speed, deltaTime);
+						ammo5.RonaMoveX(-player.speed, deltaTime);
+						ammo6.RonaMoveX(-player.speed, deltaTime);
 
 						germ1.GermMoveX(-player.speed, deltaTime);
 						germ2.GermMoveX(-player.speed, deltaTime);
@@ -1299,6 +1317,13 @@ int main(int argc, char* argv[])
 						lilacCard.RonaMoveX(player.speed, deltaTime);
 						yellowCard.RonaMoveX(player.speed, deltaTime);
 						mintCard.RonaMoveX(player.speed, deltaTime);
+
+						ammo.RonaMoveX(player.speed, deltaTime);
+						ammo2.RonaMoveX(player.speed, deltaTime);
+						ammo3.RonaMoveX(player.speed, deltaTime);
+						ammo4.RonaMoveX(player.speed, deltaTime);
+						ammo5.RonaMoveX(player.speed, deltaTime);
+						ammo6.RonaMoveX(player.speed, deltaTime);
 
 						germ1.GermMoveX(player.speed, deltaTime);
 						germ2.GermMoveX(player.speed, deltaTime);
@@ -1337,7 +1362,7 @@ int main(int argc, char* argv[])
 						if (germ1.active == true)
 						{
 							germ1.RemoveHealth();
-						}
+						} 
 						break;
 					}
 
@@ -1415,6 +1440,49 @@ int main(int argc, char* argv[])
 					mintCard.cardRect.y = -5000;
 				}
 
+				if ((SDL_HasIntersection(&player.posRect, &ammo.ammoRect)))// && ammo.active == true)
+				{
+					player.playerAmmo = 10;
+					ammo.ammoRect.x = -5000;
+					ammo.ammoRect.y = -5000;
+					ammo.active = false;
+				}
+				if ((SDL_HasIntersection(&player.posRect, &ammo2.ammoRect)))// && ammo.active == true)
+				{
+					player.playerAmmo = 10;
+					ammo2.ammoRect.x = -5000;
+					ammo2.ammoRect.y = -5000;
+					ammo2.active = false;
+				}
+				if ((SDL_HasIntersection(&player.posRect, &ammo3.ammoRect)))// && ammo.active == true)
+				{
+					player.playerAmmo = 10;
+					ammo3.ammoRect.x = -5000;
+					ammo3.ammoRect.y = -5000;
+					ammo3.active = false;
+				}
+				if ((SDL_HasIntersection(&player.posRect, &ammo4.ammoRect)))// && ammo.active == true)
+				{
+					player.playerAmmo = 10;
+					ammo4.ammoRect.x = -5000;
+					ammo4.ammoRect.y = -5000;
+					ammo4.active = false;
+				}
+				if ((SDL_HasIntersection(&player.posRect, &ammo5.ammoRect)))// && ammo.active == true)
+				{
+					player.playerAmmo = 10;
+					ammo5.ammoRect.x = -5000;
+					ammo5.ammoRect.y = -5000;
+					ammo5.active = false;
+				}
+				if ((SDL_HasIntersection(&player.posRect, &ammo6.ammoRect)))// && ammo.active == true)
+				{
+					player.playerAmmo = 10;
+					ammo6.ammoRect.x = -5000;
+					ammo6.ammoRect.y = -5000;
+					ammo6.active = false;
+				}
+
 
 
 				if (SDL_HasIntersection(&player.posRect, &germ1.germRect))
@@ -1471,6 +1539,16 @@ int main(int argc, char* argv[])
 
 					SDL_RenderCopy(renderer, Cardbkgd, NULL, &CardbkgdRect);
 
+					ammo.DrawHUD(renderer, player.playerAmmo);
+
+					ammo.DrawPU(renderer);
+					ammo2.DrawPU(renderer);
+					ammo3.DrawPU(renderer);
+					ammo4.DrawPU(renderer);
+					ammo5.DrawPU(renderer);
+					ammo6.DrawPU(renderer);
+
+
 					if (haveLilac)
 						SDL_RenderCopy(renderer, lilac, NULL, &CardbkgdRect);
 					if (haveYellow)
@@ -1520,6 +1598,11 @@ int main(int argc, char* argv[])
 			pos_X = 0;
 			X_pos = 0;
 			X_pos2 = 0;
+
+			ammo = Ammo(renderer, images_dir.c_str(), 5, 500);
+			ammo2 = Ammo(renderer, images_dir.c_str(), 1500, 500);
+			ammo3 = Ammo(renderer, images_dir.c_str(), 2100, 500);
+			ammo4 = Ammo(renderer, images_dir.c_str(), 2700, 500);
 
 			turret1 = Virus(renderer, images_dir.c_str(), audio_dir.c_str(), 700.0f, 500.0f);
 			turret2 = Virus(renderer, images_dir.c_str(), audio_dir.c_str(), 1400.0f, 500.0f);
@@ -1588,6 +1671,11 @@ int main(int argc, char* argv[])
 						key4.RonaMoveX(-player.speed, deltaTime);
 						key5.RonaMoveX(-player.speed, deltaTime);
 
+						ammo.RonaMoveX(-player.speed, deltaTime);
+						ammo2.RonaMoveX(-player.speed, deltaTime);
+						ammo3.RonaMoveX(-player.speed, deltaTime);
+						ammo4.RonaMoveX(-player.speed, deltaTime);
+
 						turret1.PlayerMoveX(-player.speed, deltaTime);
 						turret2.PlayerMoveX(-player.speed, deltaTime);
 						turret3.PlayerMoveX(-player.speed, deltaTime);
@@ -1615,6 +1703,11 @@ int main(int argc, char* argv[])
 						key3.RonaMoveX(player.speed, deltaTime);
 						key4.RonaMoveX(player.speed, deltaTime);
 						key5.RonaMoveX(player.speed, deltaTime);
+
+						ammo.RonaMoveX(player.speed, deltaTime);
+						ammo2.RonaMoveX(player.speed, deltaTime);
+						ammo3.RonaMoveX(player.speed, deltaTime);
+						ammo4.RonaMoveX(player.speed, deltaTime);
 
 						turret1.PlayerMoveX(player.speed, deltaTime);
 						turret2.PlayerMoveX(player.speed, deltaTime);
@@ -1791,6 +1884,36 @@ int main(int argc, char* argv[])
 					currentKeys += 100 / 5;
 				}
 
+
+				if ((SDL_HasIntersection(&player.posRect, &ammo.ammoRect)))// && ammo.active == true)
+				{
+					player.playerAmmo = 10;
+					ammo.ammoRect.x = -5000;
+					ammo.ammoRect.y = -5000;
+					ammo.active = false;
+				}
+				if ((SDL_HasIntersection(&player.posRect, &ammo2.ammoRect)))// && ammo.active == true)
+				{
+					player.playerAmmo = 10;
+					ammo2.ammoRect.x = -5000;
+					ammo2.ammoRect.y = -5000;
+					ammo2.active = false;
+				}
+				if ((SDL_HasIntersection(&player.posRect, &ammo3.ammoRect)))// && ammo.active == true)
+				{
+					player.playerAmmo = 10;
+					ammo3.ammoRect.x = -5000;
+					ammo3.ammoRect.y = -5000;
+					ammo3.active = false;
+				}
+				if ((SDL_HasIntersection(&player.posRect, &ammo4.ammoRect)))// && ammo.active == true)
+				{
+					player.playerAmmo = 10;
+					ammo4.ammoRect.x = -5000;
+					ammo4.ammoRect.y = -5000;
+					ammo4.active = false;
+				}
+
 				movingRect.w = currentKeys / maxKeys * 284;
 
 
@@ -1804,6 +1927,14 @@ int main(int argc, char* argv[])
 					SDL_RenderCopy(renderer, keyB, NULL, &keyRect);
 					SDL_RenderCopy(renderer, keyM, NULL, &movingRect);
 					SDL_RenderCopy(renderer, keyF, NULL, &keyRect);
+
+					ammo.DrawHUD(renderer, player.playerAmmo);
+
+					ammo.DrawPU(renderer);
+					ammo2.DrawPU(renderer);
+					ammo3.DrawPU(renderer);
+					ammo4.DrawPU(renderer);
+
 
 
 					if (key1.active)

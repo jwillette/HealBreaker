@@ -31,7 +31,7 @@ Germ::Germ(SDL_Renderer *renderer, string filePath, string audioPath, float x, f
 	center.x = germRect.w / 2;
 	center.y = germRect.h / 2;
 
-	health = 10;
+	health = 7;
 
 	// explosions for germs
 	for (int i = 0; i < 6; i++)

@@ -6,7 +6,6 @@ using namespace std;
 #include <vector>
 
 
-
 #if defined(__APPLE__)
 #include "SDL2/SDL.h"
 #include "SDL2_image/SDL_image.h"
@@ -24,7 +23,6 @@ using namespace std;
 #include "SDL2/SDL_image.h"
 #include "SDL2/SDL_mixer.h"
 #endif
-
 
 
 #include "virusBullet.h"
