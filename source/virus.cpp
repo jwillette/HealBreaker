@@ -5,6 +5,7 @@ Virus::Virus(SDL_Renderer *renderer, string filePath, string audioPath, float x,
 	active = true;
 
 	fire = Mix_LoadWAV((audioPath + "fire.wav").c_str());
+	splat = Mix_LoadWAV((audioPath + "splat.mp3").c_str());
 
 	string basePath = filePath + "vBase2.png";
 
@@ -60,8 +61,8 @@ Virus::Virus(SDL_Renderer *renderer, string filePath, string audioPath, float x,
 void Virus::Reset()
 {
 	// reset the x position off the screen
-	barrelRect.x = -1000;
-	baseRect.x = -1000;
+	barrelRect.x = -2000;
+	baseRect.x = -2000;
 
 	// update the pos_X for precision
 	posT_X = barrelRect.x;
@@ -79,6 +80,7 @@ void Virus::RemoveHealth()
 
 	if (health <= 0)
 	{
+		Mix_PlayChannel(-1, splat, 0);
 		Reset();
 	}
 }

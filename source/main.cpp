@@ -1,39 +1,33 @@
 #if defined(_WIN32) || (_WIN64)
 
-#include "SDL.h"
-#include "SDL_image.h"
-#include "SDL_mixer.h"
+	#include "SDL.h"
+	#include "SDL_image.h"
+	#include "SDL_mixer.h"
 
-#endif
-
-#if defined(_WIN32) || (_WIN64)
-
-#include <direct.h>
-#define getcwd _getcwd
+	#include <direct.h>
+	#define getcwd _getcwd
 
 #endif
 
 
 #if defined(__APPLE__)
 
-#include "SDL2/SDL.h"
-#include "SDL2_image/SDL_image.h"
-#include "SDL2_mixer/SDL_mixer.h"
+	#include "SDL2/SDL.h"
+	#include "SDL2_image/SDL_image.h"
+	#include "SDL2_mixer/SDL_mixer.h"
+
+	#include <unistd.h>
 
 #endif
 
 
 #if defined(__linux__)
 
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_image.h"
-#include "SDL2/SDL_mixer.h"
+	#include "SDL2/SDL.h"
+	#include "SDL2/SDL_image.h"
+	#include "SDL2/SDL_mixer.h"
 
-#endif
-
-#if defined(__linux__)
-
-#include <unistd.h>
+	#include <unistd.h>
 
 #endif
 
@@ -1215,7 +1209,22 @@ int main(int argc, char* argv[])
 			X_pos = 0;
 			X_pos2 = 0;
 
-//			doorRect.x = 3670;
+			doorRect.x = 3670;
+
+			haveLilac = false;
+			haveYellow = false;
+			haveMint = false;
+
+			lilacCard = Pickup(renderer, images_dir.c_str(), 0, 750.0f, 400.0f);
+			yellowCard = Pickup(renderer, images_dir.c_str(), 1, 1600.0f, 400.0f);
+			mintCard = Pickup(renderer, images_dir.c_str(), 2, 3000.0f, 400.0f);
+
+			ammo = Ammo(renderer, images_dir.c_str(), 5, 500);
+			ammo2 = Ammo(renderer, images_dir.c_str(), 1500, 500);
+			ammo3 = Ammo(renderer, images_dir.c_str(), 2100, 500);
+			ammo4 = Ammo(renderer, images_dir.c_str(), 2700, 500);
+			ammo5 = Ammo(renderer, images_dir.c_str(), 3300, 500);
+			ammo6 = Ammo(renderer, images_dir.c_str(), 3900, 500);
 
 			// germs
 			germ1 = Germ(renderer, images_dir.c_str(), audio_dir.c_str(), 800.0f, 500.0f);
@@ -1603,6 +1612,14 @@ int main(int argc, char* argv[])
 			ammo2 = Ammo(renderer, images_dir.c_str(), 1500, 500);
 			ammo3 = Ammo(renderer, images_dir.c_str(), 2100, 500);
 			ammo4 = Ammo(renderer, images_dir.c_str(), 2700, 500);
+
+			currentKeys = 0;
+
+			key1 = Pickup(renderer, images_dir.c_str(), 3, 775.0f, 525.0f);
+			key2 = Pickup(renderer, images_dir.c_str(), 4, 1500.0f, 525.0f);
+			key3 = Pickup(renderer, images_dir.c_str(), 4, 2200.0f, 525.0f);
+			key4 = Pickup(renderer, images_dir.c_str(), 4, 2900.0f, 525.0f);
+			key5 = Pickup(renderer, images_dir.c_str(), 5, 3600.0f, 525.0f);
 
 			turret1 = Virus(renderer, images_dir.c_str(), audio_dir.c_str(), 700.0f, 500.0f);
 			turret2 = Virus(renderer, images_dir.c_str(), audio_dir.c_str(), 1400.0f, 500.0f);
